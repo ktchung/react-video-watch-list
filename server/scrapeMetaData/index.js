@@ -4,7 +4,7 @@ const scrapeMetaData = async (url) => {
   let response = { statusCode: 500, error: 'Error' };
 
   try {
-    const origin = url.origin;
+    const origin = new URL(url).origin;
 
     let pageText = '';
 

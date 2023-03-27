@@ -6,8 +6,8 @@
 
 const http = require('http');
 
-const hostname = '127.0.0.1';
-const port = 5000;
+const hostname = '0.0.0.0';
+const port = 3001;
 
 const { scrapeMetaData } = require('./scrapeMetaData');
 
@@ -16,9 +16,9 @@ const server = http.createServer(async (req, res) => {
 
   try {
     const url = new URL(req.url, `https://${req.headers.host}`);
-    
-    // Accept /scrape?url=<target URL>
-    if (url.pathname === '/scrape') {
+
+    // Accept /?url=<target URL>
+    if (url.pathname === '/') {
       const {
         statusCode, data, error
       } = await scrapeMetaData(url.searchParams.get('url'));
@@ -26,7 +26,8 @@ const server = http.createServer(async (req, res) => {
       // Pass everything from scrapeMetaData into response
       res.statusCode = statusCode;
       res.setHeader('Content-Type', 'application/json');
-      res.write(JSON.stringify({ status: statusCode, data, error }));
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.write(JSON.stringify({ status: statusCode, ...(data || {}), error }));
       res.end();
     } else {
       res.statusCode = 501;
@@ -47,3 +48,12 @@ const server = http.createServer(async (req, res) => {
 server.listen(port, hostname, () => {
   console.log(`Server running at http://${hostname}:${port}/`);
 });
+
+const closeServer = () => {
+  console.log('Server closing');
+
+  server.close();
+}
+
+process.on('SIGINT', closeServer);
+process.on('SIGTERM', closeServer);
